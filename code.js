@@ -1,5 +1,3 @@
-<script>
-
 window.addEventListener("message", (event) => {
   // 1. ALWAYS verify the origin of the sender for security
   //if (event.origin !== "https://your-iframe-domain.com") {
@@ -13,8 +11,3 @@ window.addEventListener("message", (event) => {
     // Execute parent page logic here
   }
 });
-
-
-
-
-</script>
