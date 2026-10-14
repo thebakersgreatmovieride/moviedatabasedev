@@ -45,7 +45,7 @@ function writeStringToIndexedDB(db, storeName, key, value) {
 function openMediaDatabase(callbackFunc) {
     console.log("in openMediaDatabase");
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("gitMediaDB", 1);
+        const request = indexedDB.open("gitMediaDB", 2);
 
         request.onupgradeneeded = function (event) {
             const db = event.target.result;
@@ -57,10 +57,10 @@ function openMediaDatabase(callbackFunc) {
             if (!db.objectStoreNames.contains("lastUpdated")) db.createObjectStore("lastUpdated");
             if (!db.objectStoreNames.contains("appVersion")) db.createObjectStore("appVersion");
             if (!db.objectStoreNames.contains("custom1")) db.createObjectStore("custom1");
-            if (!db.objectStoreNames.contains("custom1")) db.createObjectStore("custom2");
-            if (!db.objectStoreNames.contains("custom1")) db.createObjectStore("custom3");
-            if (!db.objectStoreNames.contains("custom1")) db.createObjectStore("custom4");
-            if (!db.objectStoreNames.contains("custom1")) db.createObjectStore("custom5");
+            if (!db.objectStoreNames.contains("custom2")) db.createObjectStore("custom2");
+            if (!db.objectStoreNames.contains("custom3")) db.createObjectStore("custom3");
+            if (!db.objectStoreNames.contains("custom4")) db.createObjectStore("custom4");
+            if (!db.objectStoreNames.contains("custom5")) db.createObjectStore("custom5");
         };
 
         request.onsuccess = function (event) {
