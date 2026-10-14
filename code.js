@@ -45,7 +45,7 @@ function writeStringToIndexedDB(db, storeName, key, value) {
 function openMediaDatabase(callbackFunc) {
     console.log("in openMediaDatabase");
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("mediaDB", 1);
+        const request = indexedDB.open("gitMediaDB", 1);
 
         request.onupgradeneeded = function (event) {
             const db = event.target.result;
@@ -67,6 +67,7 @@ function openMediaDatabase(callbackFunc) {
             console.log("openMediaDatabase onSuccess");
             window.gitDb.indexedDbRef = event.target.result;
             resolve(event.target.result);
+            callbackFunc();
         };
 
         request.onerror = function (event) {
