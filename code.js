@@ -111,3 +111,23 @@ async function initStorage() {
     console.log("Error managing storage persistence:", error);
   }
 }
+
+// Check if storage is already persistent
+async function checkPersistence() {
+  if (navigator.storage && navigator.storage.persisted) {
+    const isPersisted = await navigator.storage.persisted();
+    console.log(`Is persistent: ${isPersisted}`);
+    return isPersisted;
+  }
+  return false;
+}
+
+// Request persistent storage
+async function requestPersistence() {
+  if (navigator.storage && navigator.storage.persist) {
+    const granted = await navigator.storage.persist();
+    console.log(`Persistence granted: ${granted}`);
+    return granted;
+  }
+  return false;
+}
