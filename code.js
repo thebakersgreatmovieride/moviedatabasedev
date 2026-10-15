@@ -20,6 +20,11 @@ window.addEventListener("message", (event) => {
   //}
 });
 
+function onLoad() {
+  window.moviedb = {};
+  moviedb.DEBUG = {};
+  moviedb.DEBUG.enableDbAlerts = true;
+}
 
 function saveInventoryToIndexedDb() {
     writeStringToIndexedDB(gitDb.indexedDbRef, "moviesdb", "data", gitDb.dbFromAppScript.movieInventory);
@@ -75,4 +80,30 @@ function openMediaDatabase(callbackFunc) {
             reject("IndexedDB error: " + event.target.error);
         };
     });
+}
+
+async function initStorage() {
+  try {
+    let isPersisted = await checkPersistence();
+    
+    if (isPersisted) {
+      if (moviedb.DEBUG.enableDbAlerts) alert("💾 Storage is already persistent. Your IndexedDB is safe!");
+      console.log("💾 Storage is already persistent. Your IndexedDB is safe!");
+    } else {
+      if (moviedb.DEBUG.enableDbAlerts) alert("ℹ️ Storage is best-effort. Requesting persistence...");
+      console.log("ℹ️ Storage is best-effort. Requesting persistence...");
+      isPersisted = await requestPersistence();
+      
+      if (isPersisted) {
+        if (moviedb.DEBUG.enableDbAlerts) alert("✅ Persistence GRANTED. Your data won't be deleted automatically.");
+        console.log("✅ Persistence GRANTED. Your data won't be deleted automatically.");
+      } else {
+        if (moviedb.DEBUG.enableDbAlerts) alert("⚠️ Persistence DENIED. The browser may delete data under storage pressure.");
+        console.log("⚠️ Persistence DENIED. The browser may delete data under storage pressure.");
+      }
+    }
+  } catch (error) {
+    if (moviedb.DEBUG.enableDbAlerts) alert("Error managing storage persistence:", error);
+    console.log("Error managing storage persistence:", error);
+  }
 }
