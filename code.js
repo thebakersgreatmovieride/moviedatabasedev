@@ -14,6 +14,9 @@ window.addEventListener("message", (event) => {
     window.gitDb.dbFromAppScript = event.data;
     openMediaDatabase(saveInventoryToIndexedDb);
   }
+  if (event.data.action == "INVENTORY_REQUEST") {
+    console.log("STUB - Request for stored inventory.");
+  }
   //if (event.data.status === "success") {
     // Execute parent page logic here
     event.source.postMessage("Message Recieved.", event.origin);
@@ -24,6 +27,7 @@ function onLoad() {
   window.moviedb = {};
   moviedb.DEBUG = {};
   moviedb.DEBUG.enableDbAlerts = true;
+  initStorage();
 }
 
 function saveInventoryToIndexedDb() {
