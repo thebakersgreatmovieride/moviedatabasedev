@@ -39,7 +39,8 @@ function getInventoryFromIndexedDb() {
   readStringFromIndexedDB(gitDb.indexedDbRef, "moviesdb", "data")
     .then(value => gotMoviesString(value))
     .catch(error => {
-      alert("Failed to read from IndexedDB:", error);
+      indexedDbReadFailure();
+      //alert("Failed to read from IndexedDB:", error);
   });
 }
 
