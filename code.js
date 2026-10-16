@@ -66,7 +66,7 @@ function gotFilterString(result) {
     //displayDb();
   const postData = {
     action: "INVENTORY_PAYLOAD",
-    success: true;
+    success: true,
     //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
     lastModified: "",
     movieInventory: JSON.stringify(gitDb.inventory),
