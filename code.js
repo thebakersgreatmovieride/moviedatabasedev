@@ -18,7 +18,7 @@ window.addEventListener("message", (event) => {
   if (event.data.action == "INVENTORY_REQUEST") {
     console.log("Recieved request for stored inventory.");
     window.gitDb.inventoryRequestOrigin = event.origin;
-    window.gitDB.inventoryRequestSource = event.source;
+    window.gitDb.inventoryRequestSource = event.source;
     getInventoryFromIndexedDb();
   }
   //if (event.data.status === "success") {
