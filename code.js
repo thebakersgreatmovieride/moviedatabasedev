@@ -53,7 +53,7 @@ function gotMoviesString(result) {
 }
 
 function gotTvString(result) {
-    console.log("got tv inventory, getting filters from indexedDb...);
+    console.log("got tv inventory, getting filters from indexedDb...");
     window.gitDb.tvInv = JSON.parse(result);
     readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
     //readLocalDb("filters", gotFilterString);
