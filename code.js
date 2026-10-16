@@ -66,6 +66,7 @@ function gotFilterString(result) {
     //displayDb();
   const postData = {
     action: "INVENTORY_PAYLOAD",
+    success: true;
     //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
     lastModified: "",
     movieInventory: JSON.stringify(gitDb.inventory),
@@ -75,6 +76,14 @@ function gotFilterString(result) {
     appVersion: ""
   };
     window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+}
+
+function indexedDbReadFailure() {
+    const postData - {
+      action: "INVENTORY_PAYLOAD",
+      success: false
+    };
+  window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
 }
 
 function saveInventoryToIndexedDb() {
