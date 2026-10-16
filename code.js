@@ -15,7 +15,10 @@ window.addEventListener("message", (event) => {
     openMediaDatabase(saveInventoryToIndexedDb);
   }
   if (event.data.action == "INVENTORY_REQUEST") {
-    console.log("STUB - Request for stored inventory.");
+    console.log("Recieved request for stored inventory.");
+    window.gitDb.inventoryRequestOrigin = event.origin;
+    window.gitDB.inventoryRequestSource = event.source;
+    getInventoryFromIndexedDb();
   }
   //if (event.data.status === "success") {
     // Execute parent page logic here
@@ -30,6 +33,45 @@ function onLoad() {
   initStorage();
 }
 
+function getInventoryFromIndexedDb() {
+  readStringFromIndexedDB(gitDb.indexedDbRef, "moviesdb", "data")
+    .then(value => gotMoviesString(value))
+    .catch(error => {
+      alert("Failed to read from IndexedDB:", error);
+  });
+}
+
+function gotMoviesString(result) {
+  //alert("Got movies, getting Tv...");
+    window.gitDb.inventory = JSON.parse(result);
+    readStringFromIndexedDB(gitDb.indexedDbRef, "tvdb", "data").then(value => gotTvString(value));
+    //displayDb();
+    //readLocalDb("tvdb", gotTvString);
+}
+
+function gotTvString(result) {
+    window.gitDb.tvInv = JSON.parse(result);
+    readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
+    //readLocalDb("filters", gotFilterString);
+}
+
+function gotFilterString(result) {
+    window.gitDb.filters = JSON.parse(result);
+    //moviedb.loadedFromLocalDb = true;
+    //displayDb();
+  const postData = {
+    action: "INVENTORY_PAYLOAD",
+    //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
+    lastModified: "",
+    movieInventory: JSON.stringify(gitDb.inventory),
+    tvInventory: JSON.stringify(gitDb.tvInv),
+    filters: JSON.stringify(gitDb.filters),
+    custom1: "",
+    appVersion: ""
+  };
+    window.gitDB.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+}
+
 function saveInventoryToIndexedDb() {
     writeStringToIndexedDB(gitDb.indexedDbRef, "moviesdb", "data", gitDb.dbFromAppScript.movieInventory);
     writeStringToIndexedDB(gitDb.indexedDbRef, "tvdb", "data", gitDb.dbFromAppScript.tvInventory);
@@ -37,6 +79,23 @@ function saveInventoryToIndexedDb() {
     //writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", JSON.stringify(moviedb.libraryLastUpdated));
     writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", gitDb.dbFromAppScript.lastModified);
     console.log("Wrote dbs to Indexeddb.");
+}
+
+function readStringFromIndexedDB(db, storeName, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, "readonly");
+    const store = transaction.objectStore(storeName);
+
+    const request = store.get(key);
+
+    request.onsuccess = () => {
+      resolve(request.result); // Returns the stored value, or undefined if not found
+    };
+
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
 }
 
 function writeStringToIndexedDB(db, storeName, key, value) {
