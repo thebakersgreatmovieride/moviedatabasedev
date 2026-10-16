@@ -30,7 +30,7 @@ window.addEventListener("message", (event) => {
 function onLoad() {
   window.moviedb = {};
   moviedb.DEBUG = {};
-  moviedb.DEBUG.enableDbAlerts = true;
+  moviedb.DEBUG.enableDbAlerts = false;
   initStorage();
 }
 
