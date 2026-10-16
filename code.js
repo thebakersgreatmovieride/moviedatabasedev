@@ -35,6 +35,7 @@ function onLoad() {
 }
 
 function getInventoryFromIndexedDb() {
+  console.log("Getting movie inventory from indexedDb...");
   readStringFromIndexedDB(gitDb.indexedDbRef, "moviesdb", "data")
     .then(value => gotMoviesString(value))
     .catch(error => {
@@ -43,6 +44,7 @@ function getInventoryFromIndexedDb() {
 }
 
 function gotMoviesString(result) {
+  console.log("Got movie inventory, getting tv inventory from indexedDb...");
   //alert("Got movies, getting Tv...");
     window.gitDb.inventory = JSON.parse(result);
     readStringFromIndexedDB(gitDb.indexedDbRef, "tvdb", "data").then(value => gotTvString(value));
@@ -51,12 +53,14 @@ function gotMoviesString(result) {
 }
 
 function gotTvString(result) {
+    console.log("got tv inventory, getting filters from indexedDb...);
     window.gitDb.tvInv = JSON.parse(result);
     readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
     //readLocalDb("filters", gotFilterString);
 }
 
 function gotFilterString(result) {
+    console.log("got filters, sending data to App Script page...");
     window.gitDb.filters = JSON.parse(result);
     //moviedb.loadedFromLocalDb = true;
     //displayDb();
