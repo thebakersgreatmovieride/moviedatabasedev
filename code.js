@@ -19,7 +19,7 @@ window.addEventListener("message", (event) => {
     console.log("Recieved request for stored inventory.");
     window.gitDb.inventoryRequestOrigin = event.origin;
     window.gitDb.inventoryRequestSource = event.source;
-    getInventoryFromIndexedDb();
+    openMediaDatabase(getInventoryFromIndexedDb);
   }
   //if (event.data.status === "success") {
     // Execute parent page logic here
