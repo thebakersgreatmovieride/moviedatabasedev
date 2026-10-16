@@ -74,7 +74,7 @@ function gotFilterString(result) {
     custom1: "",
     appVersion: ""
   };
-    window.gitDB.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
 }
 
 function saveInventoryToIndexedDb() {
