@@ -79,7 +79,7 @@ function gotFilterString(result) {
 }
 
 function indexedDbReadFailure() {
-    const postData - {
+    const postData = {
       action: "INVENTORY_PAYLOAD",
       success: false
     };
