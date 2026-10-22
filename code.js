@@ -62,8 +62,12 @@ window.addEventListener("message", (event) => {
   }
   if (event.data.action == "INVENTORY_REQUEST") {
     console.log("Recieved request for stored inventory.");
-    if (typeof event.origin != "string" || typeof event.source != "string") {
-      console.log("Error in INVENTORY_REQUEST handler: Event source or origin did not pass type check.");
+    if (typeof event.origin != "string") {
+      console.log("Error in INVENTORY_REQUEST handler: Event origin did not pass type check, type is " + typeof event.origin + ".");
+      return;
+    }
+    if (typeof event.source != "string") {
+      console.log("Error in INVENTORY_REQUEST handler: Event sourcedid not pass type check, type is " + typeof event.source + ".");
       return;
     }
     window.gitDb.inventoryRequestOrigin = event.origin;
