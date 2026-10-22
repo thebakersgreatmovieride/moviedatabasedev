@@ -122,8 +122,9 @@ function gotFilterString(result) {
       console.log("Filters value from Indexeddb did not pass type check. Type was " + typeof gitDb.filters + ", expected string.");
       typeChecks = false;
     }
+    var postData;
     if (typeChecks) {
-      const postData = {
+      postData = {
         action: "INVENTORY_PAYLOAD",
         success: true,
         //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
@@ -136,7 +137,7 @@ function gotFilterString(result) {
       };
     }
     else {
-      const postData = {
+      postData = {
         action: "INVENTORY_PAYLOAD",
         success: false,
         //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
