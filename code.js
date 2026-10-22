@@ -66,8 +66,8 @@ window.addEventListener("message", (event) => {
       console.log("Error in INVENTORY_REQUEST handler: Event origin did not pass type check, type is " + typeof event.origin + ".");
       return;
     }
-    if (typeof event.source != "string") {
-      console.log("Error in INVENTORY_REQUEST handler: Event sourcedid not pass type check, type is " + typeof event.source + ".");
+    if (typeof event.source != "object") {
+      console.log("Error in INVENTORY_REQUEST handler: Event source did not pass type check, type is " + typeof event.source + ".");
       return;
     }
     window.gitDb.inventoryRequestOrigin = event.origin;
