@@ -1,8 +1,8 @@
 window.gitDb = {};
 
 window.addEventListener("message", (event) => {
-  // 1. ALWAYS verify the origin of the sender for security
-  //if (event.origin !== "https://your-iframe-domain.com") {
+  // TODO: See if security check can be implemented here.
+  //if (event.origin != "https://iframe-domain.com") {
   //  return; 
   //}
 
@@ -95,31 +95,59 @@ function getInventoryFromIndexedDb() {
 
 function gotMoviesString(result) {
   console.log("Got movie inventory, getting tv inventory from indexedDb...");
-    window.gitDb.inventory = JSON.parse(result);
+    window.gitDb.inventory = result;
     readStringFromIndexedDB(gitDb.indexedDbRef, "tvdb", "data").then(value => gotTvString(value));
 }
 
 function gotTvString(result) {
     console.log("got tv inventory, getting filters from indexedDb...");
-    window.gitDb.tvInv = JSON.parse(result);
+    window.gitDb.tvInv = result;
     readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
 }
 
 function gotFilterString(result) {
     console.log("got filters, sending data to App Script page...");
-    window.gitDb.filters = JSON.parse(result);
+    window.gitDb.filters = result;
     //moviedb.loadedFromLocalDb = true;
-    const postData = {
-      action: "INVENTORY_PAYLOAD",
-      success: true,
-      //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
-      lastModified: "",
-      movieInventory: JSON.stringify(gitDb.inventory),
-      tvInventory: JSON.stringify(gitDb.tvInv),
-      filters: JSON.stringify(gitDb.filters),
-      custom1: "",
-      appVersion: ""
-    };
+    var typeChecks = true;
+    if (typeof gitDb.inventory != "string") {
+      console.log("Movie inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.inventory + ", expected string.");
+      typeChecks = false;
+    }
+    if (typeof gitDb.tvInv != "string") {
+      console.log("TV inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.tvInv + ", expected string.");
+      typeChecks = false;
+    }
+  if (typeof gitDb.filters != "string") {
+      console.log("Filters value from Indexeddb did not pass type check. Type was " + typeof gitDb.filters + ", expected string.");
+      typeChecks = false;
+    }
+    if (typeChecks) {
+      const postData = {
+        action: "INVENTORY_PAYLOAD",
+        success: true,
+        //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
+        lastModified: "",
+        movieInventory: gitDb.inventory,
+        tvInventory: gitDb.tvInv,
+        filters: gitDb.filters,
+        custom1: "",
+        appVersion: ""
+      };
+    }
+    else {
+      const postData = {
+        action: "INVENTORY_PAYLOAD",
+        success: false,
+        //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
+        lastModified: "",
+        movieInventory: "",
+        tvInventory: "",
+        filters: "",
+        custom1: "",
+        appVersion: ""
+      };
+    }
     try {
       window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
     }
