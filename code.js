@@ -6,25 +6,70 @@ window.addEventListener("message", (event) => {
   //  return; 
   //}
 
-  // 2. Access and handle the data sent by the iframe
-  console.log("Message received from iframe (" + event.origin + "):", event.data);
-  console.log("Message type = " + event.data.action);
+  if (event == null) {
+    console.log("Message from iFrame recieved. Event data is null or undefined. Ignoring.");
+    return;
+  }
+
+  if (event.origin == null) {
+    console.log("Message from iFrame recieved. Event origin is missing. Ignoring.");
+    return;
+  }
+  if (event.source == null) {
+    console.log("Message from iFrame recieved. Event source is missing. Ignoring.");
+    return;
+  }
+  if (event.data == null) {
+    console.log("Message from iFrame recieved. Event data is missing. Ignoring.");
+    return;
+  }
+  if (typeof event.data != "object") {
+    console.log("Message from iFrame recieved. Event data did not pass type check. Ignoring.");
+    return;
+  }
+  var eventDataString = "";
+  try {
+    var eventDataString = event.data.toString();
+  }
+  catch (err) {
+    var eventDataString = "[Failed to convert to string: " + err.message + "]";
+  }
+  var eventDataAction = "";
+  try {
+    if (typeof event.data.action != "string") {
+      eventDataAction = "ACTION_MISSING: Type Check Failure";
+    }
+    else {
+      eventDataAction = event.data.action;
+    }
+  }
+  catch (err) {
+    eventDataAction = "ACTION_FAULT: " + err.message;
+  }
+  
+  console.log("Message received from iframe: ACTION=" + eventDataAction + ", ORIGIN=" + event.origin + ", DATA=", event.data);
   
   if (event.data.action == "INVENTORY_POST") {
+    console.log("Recieved INVENTORY_POST data.");
+    // Validate data.
+    if (typeof event.data.movieInventory != "string") {
+      console.log("Movie inventory did not pass typecheck, expected string, recieved " + typeof event.data.movieInventory + ".");
+      return;
+    }
     console.log("Movie inventory size = " + event.data.movieInventory.length);
     window.gitDb.dbFromAppScript = event.data;
     openMediaDatabase(saveInventoryToIndexedDb);
   }
   if (event.data.action == "INVENTORY_REQUEST") {
     console.log("Recieved request for stored inventory.");
+    if (typeof event.origin != "string" || typeof event.source != "string") {
+      console.log("Error in INVENTORY_REQUEST handler: Event source or origin did not pass type check.");
+      return;
+    }
     window.gitDb.inventoryRequestOrigin = event.origin;
     window.gitDb.inventoryRequestSource = event.source;
     openMediaDatabase(getInventoryFromIndexedDb);
   }
-  //if (event.data.status === "success") {
-    // Execute parent page logic here
-    event.source.postMessage("Message Recieved.", event.origin);
-  //}
 });
 
 function onLoad() {
@@ -40,43 +85,43 @@ function getInventoryFromIndexedDb() {
     .then(value => gotMoviesString(value))
     .catch(error => {
       indexedDbReadFailure();
-      //alert("Failed to read from IndexedDB:", error);
+      console.log("Failed to read from IndexedDB: ", error);
   });
 }
 
 function gotMoviesString(result) {
   console.log("Got movie inventory, getting tv inventory from indexedDb...");
-  //alert("Got movies, getting Tv...");
     window.gitDb.inventory = JSON.parse(result);
     readStringFromIndexedDB(gitDb.indexedDbRef, "tvdb", "data").then(value => gotTvString(value));
-    //displayDb();
-    //readLocalDb("tvdb", gotTvString);
 }
 
 function gotTvString(result) {
     console.log("got tv inventory, getting filters from indexedDb...");
     window.gitDb.tvInv = JSON.parse(result);
     readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
-    //readLocalDb("filters", gotFilterString);
 }
 
 function gotFilterString(result) {
     console.log("got filters, sending data to App Script page...");
     window.gitDb.filters = JSON.parse(result);
     //moviedb.loadedFromLocalDb = true;
-    //displayDb();
-  const postData = {
-    action: "INVENTORY_PAYLOAD",
-    success: true,
-    //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
-    lastModified: "",
-    movieInventory: JSON.stringify(gitDb.inventory),
-    tvInventory: JSON.stringify(gitDb.tvInv),
-    filters: JSON.stringify(gitDb.filters),
-    custom1: "",
-    appVersion: ""
-  };
-    window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    const postData = {
+      action: "INVENTORY_PAYLOAD",
+      success: true,
+      //lastModified: JSON.stringify(moviedb.libraryLastUpdated),
+      lastModified: "",
+      movieInventory: JSON.stringify(gitDb.inventory),
+      tvInventory: JSON.stringify(gitDb.tvInv),
+      filters: JSON.stringify(gitDb.filters),
+      custom1: "",
+      appVersion: ""
+    };
+    try {
+      window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    }
+    catch (err) {
+      console.log("Exception sending post message with inventory data from Git page: " + err.message);
+    }
 }
 
 function indexedDbReadFailure() {
@@ -84,7 +129,12 @@ function indexedDbReadFailure() {
       action: "INVENTORY_PAYLOAD",
       success: false
     };
-  window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    try {
+      window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    }
+    catch (err) {
+      console.log("Exception sending post message with inventory failure signal from Git page: " + err.message);
+    }
 }
 
 function saveInventoryToIndexedDb() {
@@ -126,11 +176,13 @@ function writeStringToIndexedDB(db, storeName, key, value) {
 }
 
 function openMediaDatabase(callbackFunc) {
-    console.log("in openMediaDatabase");
+    var version = 2;
+    console.log("Opening Indexeddb 'gitMediaDB'...");
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("gitMediaDB", 2);
+        const request = indexedDB.open("gitMediaDB", version);
 
         request.onupgradeneeded = function (event) {
+            console.log("Indexeddb 'gitMedidDB' requires upgrade to version " + version + ".");
             const db = event.target.result;
 
             // Create object stores if they don't already exist
@@ -147,14 +199,14 @@ function openMediaDatabase(callbackFunc) {
         };
 
         request.onsuccess = function (event) {
-            console.log("openMediaDatabase onSuccess");
+            console.log("Indexeddb 'gitMedidDB' successfully opened.");
             window.gitDb.indexedDbRef = event.target.result;
             resolve(event.target.result);
             callbackFunc();
         };
 
         request.onerror = function (event) {
-            console.log("openMediaDatabase onError");
+            console.log("Indexeddb 'gitMedidDB' failed to open.");
             reject("IndexedDB error: " + event.target.error);
         };
     });
