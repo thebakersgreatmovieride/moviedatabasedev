@@ -47,8 +47,10 @@ window.addEventListener("message", (event) => {
   catch (err) {
     eventDataAction = "ACTION_FAULT: " + err.message;
   }
-  
-  log("Message received from iframe: ACTION=" + eventDataAction + ", ORIGIN=" + event.origin + ", DATA=", event.data);
+
+  if (event.data.action != "APP_SCRIPT_LOG") {
+    log("Message received from iframe: ACTION=" + eventDataAction + ", ORIGIN=" + event.origin + ", DATA=", event.data);
+  }
   
   if (event.data.action == "INVENTORY_POST") {
     log("Recieved INVENTORY_POST data.");
