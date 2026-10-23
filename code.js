@@ -1,4 +1,5 @@
 window.gitDb = {};
+gitDb.logs = [];
 
 window.addEventListener("message", (event) => {
   // TODO: See if security check can be implemented here.
@@ -7,24 +8,24 @@ window.addEventListener("message", (event) => {
   //}
 
   if (event == null) {
-    console.log("Message from iFrame recieved. Event data is null or undefined. Ignoring.");
+    log("Message from iFrame recieved. Event data is null or undefined. Ignoring.");
     return;
   }
 
   if (event.origin == null) {
-    console.log("Message from iFrame recieved. Event origin is missing. Ignoring.");
+    log("Message from iFrame recieved. Event origin is missing. Ignoring.");
     return;
   }
   if (event.source == null) {
-    console.log("Message from iFrame recieved. Event source is missing. Ignoring.");
+    log("Message from iFrame recieved. Event source is missing. Ignoring.");
     return;
   }
   if (event.data == null) {
-    console.log("Message from iFrame recieved. Event data is missing. Ignoring.");
+    log("Message from iFrame recieved. Event data is missing. Ignoring.");
     return;
   }
   if (typeof event.data != "object") {
-    console.log("Message from iFrame recieved. Event data did not pass type check. Ignoring.");
+    log(" Message from iFrame recieved. Event data did not pass type check. Ignoring.");
     return;
   }
   var eventDataString = "";
@@ -47,79 +48,83 @@ window.addEventListener("message", (event) => {
     eventDataAction = "ACTION_FAULT: " + err.message;
   }
   
-  console.log("Message received from iframe: ACTION=" + eventDataAction + ", ORIGIN=" + event.origin + ", DATA=", event.data);
+  log("Message received from iframe: ACTION=" + eventDataAction + ", ORIGIN=" + event.origin + ", DATA=", event.data);
   
   if (event.data.action == "INVENTORY_POST") {
-    console.log("Recieved INVENTORY_POST data.");
+    log("Recieved INVENTORY_POST data.");
     // Validate data.
     if (typeof event.data.movieInventory != "string") {
-      console.log("Movie inventory did not pass typecheck, expected string, recieved " + typeof event.data.movieInventory + ".");
+      log("Movie inventory did not pass typecheck, expected string, recieved " + typeof event.data.movieInventory + ".");
       return;
     }
-    console.log("Movie inventory size = " + event.data.movieInventory.length);
+    log("Movie inventory size = " + event.data.movieInventory.length);
     window.gitDb.dbFromAppScript = event.data;
     openMediaDatabase(saveInventoryToIndexedDb);
   }
   if (event.data.action == "INVENTORY_REQUEST") {
-    console.log("Recieved request for stored inventory.");
+    log("Recieved request for stored inventory.");
     if (typeof event.origin != "string") {
-      console.log("Error in INVENTORY_REQUEST handler: Event origin did not pass type check, type is " + typeof event.origin + ".");
+      log("Error in INVENTORY_REQUEST handler: Event origin did not pass type check, type is " + typeof event.origin + ".");
       return;
     }
     if (typeof event.source != "object") {
-      console.log("Error in INVENTORY_REQUEST handler: Event source did not pass type check, type is " + typeof event.source + ".");
+      log("Error in INVENTORY_REQUEST handler: Event source did not pass type check, type is " + typeof event.source + ".");
       return;
     }
     window.gitDb.inventoryRequestOrigin = event.origin;
     window.gitDb.inventoryRequestSource = event.source;
     openMediaDatabase(getInventoryFromIndexedDb);
   }
+  if (event.data.action == "APP_SCRIPT_LOG") {
+    if (typeof event.data.message != "string") return;
+    const logEntry = { message: event.data.message, timeStampe: Date.now(), source: "APP" };
+    gitDb.logs.push(logEntry);
+  }
 });
 
 function onLoad() {
-  window.moviedb = {};
-  moviedb.DEBUG = {};
-  moviedb.DEBUG.enableDbAlerts = false;
+  gitDb.DEBUG = {};
+  gitDb.DEBUG.enableDbAlerts = false;
   initStorage();
 }
 
 function getInventoryFromIndexedDb() {
-  console.log("Getting movie inventory from indexedDb...");
+  log("Getting movie inventory from indexedDb...");
   readStringFromIndexedDB(gitDb.indexedDbRef, "moviesdb", "data")
     .then(value => gotMoviesString(value))
     .catch(error => {
       indexedDbReadFailure();
-      console.log("Failed to read from IndexedDB: ", error);
+      log("Failed to read from IndexedDB: ", error);
   });
 }
 
 function gotMoviesString(result) {
-  console.log("Got movie inventory, getting tv inventory from indexedDb...");
+    log("Got movie inventory, getting tv inventory from indexedDb...");
     window.gitDb.inventory = result;
     readStringFromIndexedDB(gitDb.indexedDbRef, "tvdb", "data").then(value => gotTvString(value));
 }
 
 function gotTvString(result) {
-    console.log("got tv inventory, getting filters from indexedDb...");
+    log("Got tv inventory, getting filters from indexedDb...");
     window.gitDb.tvInv = result;
     readStringFromIndexedDB(gitDb.indexedDbRef, "filters", "data").then(value => gotFilterString(value));
 }
 
 function gotFilterString(result) {
-    console.log("got filters, sending data to App Script page...");
+    log("Got filters, sending data to App Script page...");
     window.gitDb.filters = result;
     //moviedb.loadedFromLocalDb = true;
     var typeChecks = true;
     if (typeof gitDb.inventory != "string") {
-      console.log("Movie inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.inventory + ", expected string.");
+      log("Movie inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.inventory + ", expected string.");
       typeChecks = false;
     }
     if (typeof gitDb.tvInv != "string") {
-      console.log("TV inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.tvInv + ", expected string.");
+      log("TV inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.tvInv + ", expected string.");
       typeChecks = false;
     }
   if (typeof gitDb.filters != "string") {
-      console.log("Filters value from Indexeddb did not pass type check. Type was " + typeof gitDb.filters + ", expected string.");
+      log("Filters value from Indexeddb did not pass type check. Type was " + typeof gitDb.filters + ", expected string.");
       typeChecks = false;
     }
     var postData;
@@ -153,7 +158,7 @@ function gotFilterString(result) {
       window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
     }
     catch (err) {
-      console.log("Exception sending post message with inventory data from Git page: " + err.message);
+      log("Exception sending post message with inventory data from Git page: " + err.message);
     }
 }
 
@@ -166,7 +171,7 @@ function indexedDbReadFailure() {
       window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
     }
     catch (err) {
-      console.log("Exception sending post message with inventory failure signal from Git page: " + err.message);
+      log("Exception sending post message with inventory failure signal from Git page: " + err.message);
     }
 }
 
@@ -176,7 +181,7 @@ function saveInventoryToIndexedDb() {
     writeStringToIndexedDB(gitDb.indexedDbRef, "filters", "data", gitDb.dbFromAppScript.filters);
     //writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", JSON.stringify(moviedb.libraryLastUpdated));
     writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", gitDb.dbFromAppScript.lastModified);
-    console.log("Wrote dbs to Indexeddb.");
+    log("Wrote dbs to Indexeddb.");
 }
 
 function readStringFromIndexedDB(db, storeName, key) {
@@ -210,12 +215,12 @@ function writeStringToIndexedDB(db, storeName, key, value) {
 
 function openMediaDatabase(callbackFunc) {
     var version = 2;
-    console.log("Opening Indexeddb 'gitMediaDB'...");
+    log("Opening Indexeddb 'gitMediaDB'...");
     return new Promise((resolve, reject) => {
         const request = indexedDB.open("gitMediaDB", version);
 
         request.onupgradeneeded = function (event) {
-            console.log("Indexeddb 'gitMedidDB' requires upgrade to version " + version + ".");
+            log("Indexeddb 'gitMedidDB' requires upgrade to version " + version + ".");
             const db = event.target.result;
 
             // Create object stores if they don't already exist
@@ -232,14 +237,14 @@ function openMediaDatabase(callbackFunc) {
         };
 
         request.onsuccess = function (event) {
-            console.log("Indexeddb 'gitMedidDB' successfully opened.");
+            log("Indexeddb 'gitMedidDB' successfully opened.");
             window.gitDb.indexedDbRef = event.target.result;
             resolve(event.target.result);
             callbackFunc();
         };
 
         request.onerror = function (event) {
-            console.log("Indexeddb 'gitMedidDB' failed to open.");
+            log("Indexeddb 'gitMedidDB' failed to open.");
             reject("IndexedDB error: " + event.target.error);
         };
     });
@@ -250,24 +255,19 @@ async function initStorage() {
     let isPersisted = await checkPersistence();
     
     if (isPersisted) {
-      if (moviedb.DEBUG.enableDbAlerts) alert("💾 Storage is already persistent. Your IndexedDB is safe!");
-      console.log("💾 Storage is already persistent. Your IndexedDB is safe!");
+      log("💾 Storage is already persistent. Your IndexedDB is safe!");
     } else {
-      if (moviedb.DEBUG.enableDbAlerts) alert("ℹ️ Storage is best-effort. Requesting persistence...");
-      console.log("ℹ️ Storage is best-effort. Requesting persistence...");
+      log(" ℹ️ Storage is best-effort. Requesting persistence...");
       isPersisted = await requestPersistence();
       
       if (isPersisted) {
-        if (moviedb.DEBUG.enableDbAlerts) alert("✅ Persistence GRANTED. Your data won't be deleted automatically.");
-        console.log("✅ Persistence GRANTED. Your data won't be deleted automatically.");
+        log("✅ Persistence GRANTED. Your data won't be deleted automatically.");
       } else {
-        if (moviedb.DEBUG.enableDbAlerts) alert("⚠️ Persistence DENIED. The browser may delete data under storage pressure.");
-        console.log("⚠️ Persistence DENIED. The browser may delete data under storage pressure.");
+        log("⚠️ Persistence DENIED. The browser may delete data under storage pressure.");
       }
     }
   } catch (error) {
-    if (moviedb.DEBUG.enableDbAlerts) alert("Error managing storage persistence:", error);
-    console.log("Error managing storage persistence:", error);
+    log("Error managing storage persistence:", error);
   }
 }
 
@@ -275,7 +275,7 @@ async function initStorage() {
 async function checkPersistence() {
   if (navigator.storage && navigator.storage.persisted) {
     const isPersisted = await navigator.storage.persisted();
-    console.log(`Is persistent: ${isPersisted}`);
+    log(`Is persistent: ${isPersisted}`);
     return isPersisted;
   }
   return false;
@@ -285,8 +285,17 @@ async function checkPersistence() {
 async function requestPersistence() {
   if (navigator.storage && navigator.storage.persist) {
     const granted = await navigator.storage.persist();
-    console.log(`Persistence granted: ${granted}`);
+    log(`Persistence granted: ${granted}`);
     return granted;
   }
   return false;
+}
+
+function log(message) {
+  if (typeof message != "string") return;
+  message = "[GIT] " + message;
+  console.log(message);
+  if (gitDb.DEBUG.enableDbAlerts) alert(message);
+  const logEntry = { message: message, timeStamp: Date.now(), source: "GIT" }; 
+  gitDb.logs.push(logEntry);
 }
