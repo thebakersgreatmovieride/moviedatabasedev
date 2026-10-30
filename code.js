@@ -82,12 +82,27 @@ window.addEventListener("message", (event) => {
     const logEntry = { message: event.data.message, timeStampe: Date.now(), source: "APP" };
     gitDb.logs.push(logEntry);
   }
+  if (event.data.action == "REQUEST_REFRESH") {
+    log("Hard refresh requested...");
+    hardRefresh();
+  }
 });
 
 function onLoad() {
   gitDb.DEBUG = {};
   gitDb.DEBUG.enableDbAlerts = false;
   initStorage();
+}
+
+function hardRefresh() {
+      // Get the current URL structure
+    const url = new URL(window.location.href);
+    
+    // Set or overwrite a unique 't' parameter with the current timestamp
+    url.searchParams.set('t', new Date().getTime());
+    
+    // Redirect the browser to the new cache-busted URL
+    window.location.href = url.toString();
 }
 
 function getInventoryFromIndexedDb() {
