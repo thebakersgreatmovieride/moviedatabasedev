@@ -130,7 +130,17 @@ function gotTvString(result) {
 function gotFilterString(result) {
     log("Got filters, sending data to App Script page...");
     window.gitDb.filters = result;
-    //moviedb.loadedFromLocalDb = true;
+    readStringFromIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data").then(value => gotLastUpdatedString(value));
+}
+
+function gotLastUpdatedString(result) {
+    log("Got last udpated date (" + result + ").");
+    window.gitDb.lastUpdated = result;
+    sendDataToIFrame();
+}
+
+function sendDataToIFrame() {
+    log("Sending indexedDb data to iFrame...");
     var typeChecks = true;
     if (typeof gitDb.inventory != "string") {
       log("Movie inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.inventory + ", expected string.");
