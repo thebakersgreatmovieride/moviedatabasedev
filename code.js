@@ -86,6 +86,10 @@ window.addEventListener("message", (event) => {
     log("Hard refresh requested...");
     hardRefresh();
   }
+  if (event.data.action == "REQUEST_ERASE") {
+    log("Inventory delete requested...");
+    deleteInventoryFromIndexedDb();
+  }
 });
 
 function onLoad() {
@@ -150,10 +154,11 @@ function sendDataToIFrame() {
       log("TV inventory value from Indexeddb did not pass type check. Type was " + typeof gitDb.tvInv + ", expected string.");
       typeChecks = false;
     }
-  if (typeof gitDb.filters != "string") {
+    if (typeof gitDb.filters != "string") {
       log("Filters value from Indexeddb did not pass type check. Type was " + typeof gitDb.filters + ", expected string.");
       typeChecks = false;
     }
+    if (gitDb.inventory == "" || gitDb.tvInv == "" || gitDb.filters == "") typechecks = false;
     var postData;
     if (typeChecks) {
       postData = {
@@ -208,7 +213,25 @@ function saveInventoryToIndexedDb() {
     writeStringToIndexedDB(gitDb.indexedDbRef, "filters", "data", gitDb.dbFromAppScript.filters);
     //writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", JSON.stringify(moviedb.libraryLastUpdated));
     writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", gitDb.dbFromAppScript.lastModified);
-    log("Wrote dbs to Indexeddb.");
+    log("Wrote dbs to IndexedDb.");
+}
+
+function deleteInventoryFromIndexedDb() {
+    writeStringToIndexedDB(gitDb.indexedDbRef, "moviesdb", "data", "");
+    writeStringToIndexedDB(gitDb.indexedDbRef, "tvdb", "data", "");
+    writeStringToIndexedDB(gitDb.indexedDbRef, "filters", "data", "");
+    writeStringToIndexedDB(gitDb.indexedDbRef, "lastUpdated", "data", "");
+    log("Deleted IndexedDb data.");
+    postData = {
+      action: "INVENTORY_DELETE_CONFIRM",
+      success: true
+    };
+    try {
+      window.gitDb.inventoryRequestSource.postMessage(postData, window.gitDb.inventoryRequestOrigin);
+    }
+    catch (err) {
+      log("Exception sending post message for inventory deletion confirmation: " + err.message);
+    }
 }
 
 function readStringFromIndexedDB(db, storeName, key) {
